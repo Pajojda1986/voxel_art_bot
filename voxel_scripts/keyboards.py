@@ -2,35 +2,6 @@ from aiogram.types import ReplyKeyboardMarkup
 from voxel_scripts import database as db
 import sqlite3 as sq
 
-main = ReplyKeyboardMarkup(resize_keyboard=True)
-main.add("Услуги", "Мои заказы").add("Отзывы")
-
-main_admins = ReplyKeyboardMarkup(resize_keyboard=True)
-main_admins.add("Услуги", "Отзывы").add("Мои заказы", "Панель администрации")
-
-artist_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-artist_keyboard.add("Товары", "Отзывы").add("Мои заказы", "Панель художника")
-
-admins_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-admins_panel.add("Заглушка").add("Заглушка").add("Заглушка")
-
-artist_personal_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-artist_personal_panel.add('Заказы', 'Баланс').add('Назад')
-
-
-async def get_money(id):
-    db = sq.connect('voxel.db')
-    cur = db.cursor()
-    cur.execute('SELECT NAME FROM sqlite_master WHERE TYPE="table"')
-    all_current_tables = cur.fetchall()[6:11]
-    all_money = 0
-    for table in all_current_tables:
-        result = cur.execute(f"SELECT * FROM {table[0]}")
-        for row in result:
-            if row[4] == id:
-                all_money += row[-4]
-    return all_money
-
 async def new_order_chat(id, type=None):
     order_artist_panel = ReplyKeyboardMarkup(resize_keyboard=True)
     order = {}
@@ -97,6 +68,25 @@ def artist_panel():
     artist_panel.add("Случайно", "Назад")
 
     return artist_panel
+
+
+main = ReplyKeyboardMarkup(resize_keyboard=True)
+main.add("Услуги", "Мои заказы").add("Отзывы")
+
+main_multi = ReplyKeyboardMarkup(resize_keyboard=True)
+main_multi.add("Услуги", "Отзывы").add("Мои заказы", "Панель администрации").add('Панель художника')
+
+main_admins = ReplyKeyboardMarkup(resize_keyboard=True)
+main_admins.add("Услуги", "Отзывы").add("Мои заказы", "Панель администрации")
+
+artist_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+artist_keyboard.add("Товары", "Отзывы").add("Мои заказы", "Панель художника")
+
+admins_panel = ReplyKeyboardMarkup(resize_keyboard=True)
+admins_panel.add("Таблица", "Балансы").add("Назад")
+
+artist_personal_panel = ReplyKeyboardMarkup(resize_keyboard=True)
+artist_personal_panel.add('Заказы', 'Баланс').add('Назад')
 
 goods = ReplyKeyboardMarkup(resize_keyboard=True)
 goods.add('Скин', '4D скин (Java) ').add('Плащ ', '3D аватар ').add('Тотем (2D/3D) ', 'Спец-заказ').add('Назад')

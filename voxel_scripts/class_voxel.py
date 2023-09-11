@@ -58,3 +58,9 @@ class ArtistPanel(StatesGroup):
     search = State()
     pre_chat = State()
     chat = State()
+
+
+class AdminsPanel(StatesGroup):
+
+    search = State()
+    close = State()

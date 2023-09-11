@@ -142,20 +142,43 @@ async def db_start():
         skin4d INTEGER,
         avatar INTEGER,
         cloak INTEGER,
-        totem INTEGER
-        )''')
-
-    cur.execute(''' CREATE TABLE IF NOT EXISTS balance (
-        id INTEGER PRIMARY KEY,
-        type TEXT,
-        id_tg INTEGER,
+        totem INTEGER,
         balance INTEGER
+        )''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        admin_id INTEGER 
         )''')
     cur.execute(''' CREATE TABLE IF NOT EXISTS times (
         id INTEGER PRIMARY KEY,
         time_t TEXT
         )''')
     db.commit()
+
+
+def get_admins_info(all=None):
+    if all == 1:
+        all_admins = {
+            'id': [],
+            'name': []
+        }
+        cur.execute('SELECT * FROM admins')
+        admins_table = cur.fetchall()
+        for admin in admins_table:
+            all_admins['id'].append(str(admin[2]))
+            all_admins['name'].append(admin[1])
+
+        print(all_admins['name'])
+        return all_admins
+
+
+async def get_money(id):
+    db = sq.connect('voxel.db')
+    cur = db.cursor()
+    cur.execute(f'SELECT balance FROM artists WHERE artist_id={id}')
+    all_money = cur.fetchone()[0]
+    return all_money
 
 
 def get_artists_info(all=None):
@@ -203,6 +226,25 @@ def get_artists_info(all=None):
         print(artists_name)
         return artists_name
 
+    elif all == 3:
+        cur.execute('SELECT name, artist_id FROM artists')
+        all_artists = cur.fetchall()
+        return all_artists
+
+
+async def get_balance():
+    name_id = get_artists_info(all=3)
+    db = sq.connect('voxel.db')
+    cur = db.cursor()
+    message = ''
+
+    for id in name_id:
+        print(id)
+        cur.execute(f'SELECT balance, name FROM artists WHERE artist_id={id[1]}')
+        all_data = cur.fetchone()
+        message += (f'Баланс {all_data[1]}: {all_data[0]} рублей\n')
+
+    return message
 
 async def new_count_order():
     data = f"{datetime.now(): {'%Y-%m-%d %H:%M'}}"
@@ -249,7 +291,12 @@ async def skin_4d(ord, message, var=1):
         db.commit()
 
     if var == 3:
-        final_order = f"""DELETE FROM skins4d where num={ord}"""
+        cur.execute(f"""SELECT amount, artist_id FROM skins4d WHERE num={ord}""")
+        meta = cur.fetchone()
+        cur.execute(f'''SELECT balance FROM artists WHERE artist_id={meta[1]}''')
+        new_balance = cur.fetchone()[0] + (meta[0] // 2)
+        cur.execute(f"""UPDATE artists SET balance = {new_balance} WHERE artist_id={meta[1]}""")
+        final_order = f"""DELETE FROM skins4d WHERE num={ord}"""
         cur.execute(final_order)
         db.commit()
 
@@ -288,6 +335,11 @@ async def totem(ord, message, var=1):
         db.commit()
 
     if var == 3:
+        cur.execute(f"""SELECT amount, artist_id FROM totems WHERE num={ord}""")
+        meta = cur.fetchone()
+        cur.execute(f'''SELECT balance FROM artists WHERE artist_id={meta[1]}''')
+        new_balance = cur.fetchone()[0] + (meta[0] // 2)
+        cur.execute(f"""UPDATE artists SET balance = {new_balance} WHERE artist_id={meta[1]}""")
         final_order = f"""DELETE FROM totems WHERE num={ord}"""
         cur.execute(final_order)
         db.commit()
@@ -326,6 +378,11 @@ async def skin(ord, message, var=1):
         cur.execute(final_order)
         db.commit()
     if var == 3:
+        cur.execute(f"""SELECT amount, artist_id FROM skins WHERE num={ord}""")
+        meta = cur.fetchone()
+        cur.execute(f'''SELECT balance FROM artists WHERE artist_id={meta[1]}''')
+        new_balance = cur.fetchone()[0] + (meta[0] // 2)
+        cur.execute(f"""UPDATE artists SET balance = {new_balance} WHERE artist_id={meta[1]}""")
         final_order = f"""DELETE FROM skins where num={ord}"""
         cur.execute(final_order)
         db.commit()
@@ -363,7 +420,12 @@ async def cloak(ord, message, var=1):
         cur.execute(final_order)
         db.commit()
     if var == 3:
-        final_order = f"""DELETE FROM cloaks     where num={ord}"""
+        cur.execute(f"""SELECT amount, artist_id FROM cloaks WHERE num={ord}""")
+        meta = cur.fetchone()
+        cur.execute(f'''SELECT balance FROM artists WHERE artist_id={meta[1]}''')
+        new_balance = cur.fetchone()[0] + (meta[0] // 2)
+        cur.execute(f"""UPDATE artists SET balance = {new_balance} WHERE artist_id={meta[1]}""")
+        final_order = f"""DELETE FROM cloaks where num={ord}"""
         cur.execute(final_order)
         db.commit()
 
@@ -400,6 +462,11 @@ async def avatar(ord, message, var=1):
         db.commit()
 
     if var == 3:
+        cur.execute(f"""SELECT amount, artist_id FROM avatars WHERE num={ord}""")
+        meta = cur.fetchone()
+        cur.execute(f'''SELECT balance FROM artists WHERE artist_id={meta[1]}''')
+        new_balance = cur.fetchone()[0] + (meta[0] // 2)
+        cur.execute(f"""UPDATE artists SET balance = {new_balance} WHERE artist_id={meta[1]}""")
         final_order = f"""DELETE FROM avatars where num={ord}"""
         cur.execute(final_order)
         db.commit()
