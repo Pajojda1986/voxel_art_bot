@@ -2,7 +2,6 @@ from aiogram import types
 from aiogram.types.message import ContentType
 from random import randint, choices
 import string
-import os
 import sqlite3 as sq
 from voxel_scripts import database as db
 from aiogram.dispatcher import FSMContext
@@ -180,17 +179,23 @@ async def order_photo(message, dictionary):
 @dp.message_handler(commands=['start'])
 @dp.message_handler(text='Назад')
 async def cmd_start(message: types.Message):
-    db.get_artists_info()
-    all_photo[message.from_user.id] = []
-    all_totem[message.from_user.id] = []
-    all_cloak[message.from_user.id] = []
-    await db.cmd_start_db(message.from_user.id)
-    await message.answer(f'🤖 Добро пожаловать {message.from_user.first_name}! Я - Воксель, бот, '
-                         f'который поможет Вам с заказом. Чтобы оформить заказ, '
-                         f'напишите "Товары" или нажмите соответствующую кнопку. 👇', reply_markup=kb.main)
-
     print(message.chat.id)
-    if str(message.from_user.id) in db.get_artists_info():
+    if str(message.from_user.id) not in db.get_artists_info() and str(message.from_user.id) not in db.get_admins_info(all=1)['id']:
+        all_photo[message.from_user.id] = []
+        all_totem[message.from_user.id] = []
+        all_cloak[message.from_user.id] = []
+        await db.cmd_start_db(message.from_user.id)
+        await message.answer(f'🤖 Добро пожаловать {message.from_user.first_name}! Я - Воксель, бот, '
+                             f'который поможет Вам с заказом. Чтобы оформить заказ, '
+                             f'напишите "Товары" или нажмите соответствующую кнопку. 👇', reply_markup=kb.main)
+
+    elif str(message.from_user.id) in db.get_artists_info() and str(message.from_user.id) in db.get_admins_info(all=1)['id']:
+        await message.answer('Вы авторизовались как администратор и художник!', reply_markup=kb.main_multi)
+
+    elif str(message.from_user.id) in db.get_admins_info(all=1)['id']:
+        await message.answer(f'Вы авторизовались как администратор', reply_markup=kb.main_admins)
+
+    elif str(message.from_user.id) in db.get_artists_info():
         await message.answer(f'Вы авторизовались как художник', reply_markup=kb.artist_keyboard)
 
 
@@ -565,7 +570,7 @@ async def order_skin(message: types.Message, state: FSMContext):
         await message.answer("👨‍🎨 У нас работает несколько талантливых художников, "
                              "у каждого из которых свой неповторимый стиль! Вы можете выбрать того, "
                              "кто будет выполнять Ваш заказ или отдать его "
-                             "случайному художнику 🎲", reply_markup= kb.artist_panel())
+                             "случайному художнику 🎲", reply_markup=kb.artist_panel())
         await cls.OrderSkin.next()
 
     elif message.text == 'Назад' or message.text == 'Отмена':
@@ -1224,8 +1229,18 @@ async def cmd_text_artist(message: types.Message):
 
 @dp.message_handler(text='Панель администрации')
 async def cmd_text_admins(message: types.Message):
-    if message.from_user.id == int(os.getenv('ADMIN_ID')):
+    if str(message.from_user.id) in db.get_admins_info(all=1)['id']:
         await message.answer('Вы вошли в панель Администрации', reply_markup=kb.admins_panel)
+    else:
+        await message.reply("Извините, я вас не понимаю. 😔")
+
+
+@dp.message_handler(text='Таблица')
+async def cmd_text_admins(message: types.Message):
+    if str(message.from_user.id) in db.get_admins_info(all=1)['id']:
+        await message.answer('Текущая база данных:', reply_markup=kb.admins_panel)
+        database = open('voxel.db', 'rb')
+        await bot.send_document(message.from_user.id, database)
     else:
         await message.reply("Извините, я вас не понимаю. 😔")
 
@@ -1241,11 +1256,10 @@ async def cmd_text_artist(message: types.Message):
 @dp.message_handler(text="Баланс")
 async def cmd_text_artist(message: types.Message):
     if str(message.from_user.id) in db.get_artists_info():
-        money = await kb.get_money(message.from_user.id) // 2
+        money = await db.get_money(message.from_user.id) // 2
         await message.answer(f'Ваш баланс: {money} рублей! Мы выплачиваем деньги сотрудникам первого числа каждого месяца')
     else:
         await message.reply("Извините, я вас не понимаю. 😔")
-
 
 
 @dp.message_handler()

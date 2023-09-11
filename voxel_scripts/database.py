@@ -144,7 +144,11 @@ async def db_start():
         cloak INTEGER,
         totem INTEGER
         )''')
-
+    cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        admin_id INTEGER 
+        )''')
     cur.execute(''' CREATE TABLE IF NOT EXISTS balance (
         id INTEGER PRIMARY KEY,
         type TEXT,
@@ -157,6 +161,34 @@ async def db_start():
         )''')
     db.commit()
 
+
+def get_admins_info(all=None):
+    if all == 1:
+        all_admins = {
+            'id': [],
+            'name': []
+        }
+        cur.execute('SELECT * FROM admins')
+        admins_table = cur.fetchall()
+        for admin in admins_table:
+            all_admins['id'].append(str(admin[2]))
+            all_admins['name'].append(admin[1])
+
+        print(all_admins['name'])
+        return all_admins
+
+async def get_money(id):
+    db = sq.connect('voxel.db')
+    cur = db.cursor()
+    cur.execute('SELECT NAME FROM sqlite_master WHERE TYPE="table"')
+    all_current_tables = cur.fetchall()[6:11]
+    all_money = 0
+    for table in all_current_tables:
+        result = cur.execute(f"SELECT * FROM {table[0]}")
+        for row in result:
+            if row[4] == id:
+                all_money += row[-4]
+    return all_money
 
 def get_artists_info(all=None):
     if all == 1:
