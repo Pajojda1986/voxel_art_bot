@@ -196,7 +196,7 @@ async def cmd_start(message: types.Message):
 
 @dp.message_handler(text='Отзывы', state=None)
 async def cmd_text(message: types.Message):
-    await message.answer('Посмотреть отзывы Вы сможете в нашей группе vk')
+    await message.answer('Посмотреть отзывы Вы сможете в нашей группе VK https://vk.com/lootskinsstudio?w=app6326142_-222235507')
 
 @dp.message_handler(text='Услуги', state=None)
 async def cmd_text(message: types.Message):
