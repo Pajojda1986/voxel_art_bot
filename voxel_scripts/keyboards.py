@@ -3,13 +3,13 @@ from voxel_scripts import database as db
 import sqlite3 as sq
 
 main = ReplyKeyboardMarkup(resize_keyboard=True)
-main.add("Товары", "Заглушка").add("Мои заказы", "Заглушка")
+main.add("Услуги", "Мои заказы").add("Отзывы")
 
 main_admins = ReplyKeyboardMarkup(resize_keyboard=True)
-main_admins.add("Товары", "Заглушка").add("Мои заказы", "Панель администрации")
+main_admins.add("Услуги", "Отзывы").add("Мои заказы", "Панель администрации")
 
 artist_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-artist_keyboard.add("Товары", "Заглушка").add("Мои заказы", "Панель художника")
+artist_keyboard.add("Товары", "Отзывы").add("Мои заказы", "Панель художника")
 
 admins_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 admins_panel.add("Заглушка").add("Заглушка").add("Заглушка")

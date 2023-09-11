@@ -194,7 +194,11 @@ async def cmd_start(message: types.Message):
         await message.answer(f'Вы авторизовались как художник', reply_markup=kb.artist_keyboard)
 
 
-@dp.message_handler(text='Товары', state=None)
+@dp.message_handler(text='Отзывы', state=None)
+async def cmd_text(message: types.Message):
+    await message.answer('Посмотреть отзывы Вы сможете в нашей группе vk')
+
+@dp.message_handler(text='Услуги', state=None)
 async def cmd_text(message: types.Message):
     await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
 
