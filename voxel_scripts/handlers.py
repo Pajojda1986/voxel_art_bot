@@ -180,11 +180,12 @@ async def order_photo(message, dictionary):
 @dp.message_handler(text='Назад')
 async def cmd_start(message: types.Message):
     print(message.chat.id)
+    await db.cmd_start_db(message.from_user.id)
     if str(message.from_user.id) not in db.get_artists_info() and str(message.from_user.id) not in db.get_admins_info(all=1)['id']:
         all_photo[message.from_user.id] = []
         all_totem[message.from_user.id] = []
         all_cloak[message.from_user.id] = []
-        await db.cmd_start_db(message.from_user.id)
+
         await message.answer(f'🤖 Добро пожаловать {message.from_user.first_name}! Я - Воксель, бот, '
                              f'который поможет Вам с заказом. Чтобы оформить заказ, '
                              f'напишите "Товары" или нажмите соответствующую кнопку. 👇', reply_markup=kb.main)
@@ -1235,6 +1236,17 @@ async def cmd_text_admins(message: types.Message):
         await message.reply("Извините, я вас не понимаю. 😔")
 
 
+@dp.message_handler(text='Балансы')
+async def cmd_text_admins(message: types.Message):
+    if str(message.from_user.id) in db.get_admins_info(all=1)['id']:
+        await message.answer('Нынешние балансы художников:')
+        balance = await db.get_balance()
+        await message.answer(balance)
+
+    else:
+        await message.reply("Извините, я вас не понимаю. 😔")
+
+
 @dp.message_handler(text='Таблица')
 async def cmd_text_admins(message: types.Message):
     if str(message.from_user.id) in db.get_admins_info(all=1)['id']:
@@ -1256,7 +1268,7 @@ async def cmd_text_artist(message: types.Message):
 @dp.message_handler(text="Баланс")
 async def cmd_text_artist(message: types.Message):
     if str(message.from_user.id) in db.get_artists_info():
-        money = await db.get_money(message.from_user.id) // 2
+        money = await db.get_money(message.from_user.id)
         await message.answer(f'Ваш баланс: {money} рублей! Мы выплачиваем деньги сотрудникам первого числа каждого месяца')
     else:
         await message.reply("Извините, я вас не понимаю. 😔")

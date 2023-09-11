@@ -83,7 +83,7 @@ artist_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=Tr
 artist_keyboard.add("Товары", "Отзывы").add("Мои заказы", "Панель художника")
 
 admins_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-admins_panel.add("Таблица", "Заглушка").add("Назад")
+admins_panel.add("Таблица", "Балансы").add("Назад")
 
 artist_personal_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 artist_personal_panel.add('Заказы', 'Баланс').add('Назад')
