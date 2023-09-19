@@ -18,11 +18,10 @@ class OrderSkin(StatesGroup):
 
 
 class OrderSkin4D(StatesGroup):
-
     type_ord = 'skin4d'
     description = State()
     photo = State()
-
+    payment = State()
 
 class OrderCloak(StatesGroup):
 

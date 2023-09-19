@@ -118,5 +118,8 @@ menu.add('Меню')
 exit_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 exit_panel.add("Выйти")
 
+payment_ok = ReplyKeyboardMarkup(resize_keyboard=True)
+payment_ok.add("Проверить оплату", "Назад")
+
 exit_ord_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 exit_ord_panel.add("Выйти").add("Завершить заказ")

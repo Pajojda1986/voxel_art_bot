@@ -2,6 +2,7 @@ from aiogram import types
 from aiogram.types.message import ContentType
 from random import randint, choices
 import string
+from yookassa import Payment
 from voxel_scripts import url_payments as pt
 import sqlite3 as sq
 from voxel_scripts import database as db
@@ -509,7 +510,7 @@ async def skin4D(message: types.Message, state: FSMContext):
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
 
-
+payment_orders = {}
 @dp.message_handler(state=cls.OrderSkin4D.photo, content_types=['document', 'photo', 'text'])
 async def skin4D(message: types.Message, state: FSMContext):
     await order_photo(message, all_4d)
@@ -522,35 +523,40 @@ async def skin4D(message: types.Message, state: FSMContext):
         await cls.OrderSkin4D.description.set()
 
     elif message.text == 'Оплата':
-
-        order = pt.payment
-        print(order)
+        order = await pt.get_url_payment()
+        url = order.confirmation.confirmation_url
+        await message.answer(f'Ссылка на оплату: {url}', reply_markup=kb.payment_ok)
+        payment_orders[message.from_user.id] = order
+        await cls.OrderSkin4D.payment.set()
 
     elif message.text == 'Отмена заказа':
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
 
+@dp.message_handler(state=cls.OrderSkin4D.payment, content_types=['text'])
+async def skin4D(message: types.Message, state: FSMContext):
+    if message.text == "Проверить оплату":
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+            ord = await get_ord_other(message, state, all_4d, 'description', rand=ran, price=399)
+            await db.new_count_order()
+            await db.skin_4d(ord, message=message)
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            print(payment_orders)
+            del payment_orders[message.from_user.id]
+            print(payment_orders)
+            await state.finish()
+            await cmd_start(message)
+        else:
+            await message.answer("Вы ещё не оплатили заказ")
 
-
-
-# @dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin4D.photo)
-# async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-#     await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
-#
-#
-# @dp.message_handler(state=cls.OrderSkin4D.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-# async def succsessful_payment(message: types.Message, state: FSMContext):
-#     print('ОПЛАТА ПРОШЛА УСПЕШНО')
-#     ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-#     ord = await get_ord_other(message, state, all_4d, 'description', rand=ran, price=399)
-#     await db.new_count_order()
-#     await db.skin_4d(ord, message=message)
-#     await message.answer(
-#         'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-#     await message.answer(
-#         'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-#     await state.finish()
-#     await cmd_start(message)
+    if message.text == "Назад":
+        await final_other(message, state, 5, all_4d, '4D скина')
+        await cls.OrderSkin4D.previous()
 
 
 @dp.message_handler(text='Скин', state=None)
