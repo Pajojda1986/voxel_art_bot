@@ -190,6 +190,7 @@ async def cmd_start(message: types.Message):
                              f'который поможет Вам с заказом. Чтобы оформить заказ, '
                              f'напишите "Товары" или нажмите соответствующую кнопку. 👇', reply_markup=kb.main)
 
+
     elif str(message.from_user.id) in db.get_artists_info() and str(message.from_user.id) in db.get_admins_info(all=1)['id']:
         await message.answer('Вы авторизовались как администратор и художник!', reply_markup=kb.main_multi)
 
@@ -199,6 +200,7 @@ async def cmd_start(message: types.Message):
     elif str(message.from_user.id) in db.get_artists_info():
         await message.answer(f'Вы авторизовались как художник', reply_markup=kb.artist_keyboard)
 
+    await bot.send_photo(chat_id=message.chat.id, photo=open('picture/menu.png', 'rb'))
 
 @dp.message_handler(text='Отзывы', state=None)
 async def cmd_text(message: types.Message):
@@ -220,6 +222,7 @@ async def totem(message: types.Message):
     await message.answer('Какой предмет игрок чаще всего носит в руке? '
                          'Конечно, тотем бессмертия! Из него можно сделать абсолютно всё - от забавной статуэтки с '
                          'Вашим персонажем до магического кристалла.', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/totem.png', 'rb'))
     await message.answer('Сначала выберите, каким будет Ваш тотем - 2D или 3D', reply_markup=kb.type_totem_panel)
 
     await cls.OrderTotem.type.set()
@@ -347,6 +350,7 @@ async def totem(message: types.Message, state: FSMContext):
 async def avatar(message: types.Message):
     all_3D_avatar[message.from_user.id] = []
     await message.answer('👨 Уникальное фото профиля с Вашим персонажем!', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/avatar.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий аватар')
 
     await cls.Order3dAvatar.description.set()
@@ -432,6 +436,7 @@ async def cloak(message: types.Message):
                          'да и получить их не так просто, но с помощью мода Advanced Capes Mod можно '
                          'установить плащ с совершенно любым рисунком! '
                          'Мы сделаем его по Вашему описанию!', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/cloak.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий плащ')
 
     await cls.OrderCloak.description.set()
@@ -514,6 +519,7 @@ async def skin4D(message: types.Message):
                          'Для того, чтобы использовать 4D скин, необходим мод Figura: '
                          'https://modrinth.com/mod/figura подробнее о том, как установить такой скин: '
                          'ссылка на статью', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/4d_skin.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий 4D скин.')
 
     await cls.OrderSkin4D.description.set()
@@ -599,6 +605,7 @@ async def order_skin(message: types.Message):
     all_cloak[message.from_user.id] = []
     await message.answer('Давайте выберем, какие руки будут у Вашего скина - '
                          'стандартные, как у Стива, или тонкие, как у Алекс?', reply_markup=kb.hands_panel)
+    await bot.send_photo(message.from_user.id, open('picture/hands.png', 'rb'))
 
     await cls.OrderSkin.hand_type.set()
 
@@ -616,6 +623,8 @@ async def order_skin(message: types.Message, state: FSMContext):
                              "у каждого из которых свой неповторимый стиль! Вы можете выбрать того, "
                              "кто будет выполнять Ваш заказ или отдать его "
                              "случайному художнику 🎲", reply_markup=kb.artist_panel())
+        await bot.send_photo(message.from_user.id, open('picture/wioaru.png', 'rb'))
+        await bot.send_photo(message.from_user.id, open('picture/dialm.png', 'rb'))
         await cls.OrderSkin.next()
 
     elif message.text == 'Назад' or message.text == 'Отмена':
@@ -704,8 +713,9 @@ async def order_skin(message: types.Message, state: FSMContext):
         await cls.OrderSkin.previous()
         await message.answer("👨‍🎨 У нас работает несколько талантливых художников, "
                              "у каждого из которых свой неповторимый стиль! Вы можете выбрать того, кто будет "
-                             "выполнять Ваш заказ или отдать его случайному художнику 🎲", reply_markup = kb.artist_panel())
-
+                             "выполнять Ваш заказ или отдать его случайному художнику 🎲", reply_markup=kb.artist_panel())
+        await bot.send_photo(message.from_user.id, open('picture/wioaru.png', 'rb'))
+        await bot.send_photo(message.from_user.id, open('picture/dialm.png', 'rb'))
 
 @dp.message_handler(state=cls.OrderSkin.photo, content_types=['document', 'photo', 'text'])
 async def order_skin(message: types.Message, state: FSMContext):
@@ -743,6 +753,7 @@ async def order_skin(message: types.Message):
         await message.answer("Какой предмет игрок чаще всего носит в руке? Конечно, "
                              "тотем бессмертия! Из него можно сделать абсолютно всё - от забавной статуэтки с "
                              "Вашим персонажем до магического кристалла")
+        await bot.send_photo(message.from_user.id, open('picture/totem.png', 'rb'))
         await message.answer("Сначала выберите, каким будет Ваш тотем - 2D или 3D", reply_markup=kb.type_totem_panel)
         await cls.OrderSkin.next()
 
@@ -820,6 +831,7 @@ async def order_skin(message: types.Message, state: FSMContext):
         await message.answer("Майнкрафт предлагает ограниченное количество плащей, "
                              "да и получить их не так просто, но с помощью мода Advanced Capes Mod можно установить "
                              "плащ с совершенно любым рисунком! Мы сделаем его по Вашему описанию!")
+        await bot.send_photo(message.from_user.id, open('picture/cloak.png', 'rb'))
         await message.answer("Опишите, как Вы представляете Ваш будущий плащ.", reply_markup=kb.cancel_panel)
         await cls.OrderSkin.cloak_description2.set()
 
@@ -843,41 +855,6 @@ async def order_skin(message: types.Message, state: FSMContext):
             payment_orders[message.from_user.id] = order
             await cls.OrderSkin.payment_skin.set()
 
-
-# @dp.message_handler(state=cls.OrderSkin.payment_skin_and_totem, content_types=['text'])
-# async def totem(message: types.Message, state: FSMContext):
-#     if message.text == "Проверить оплату":
-#         payment = Payment.find_one(payment_orders[message.from_user.id].id)
-#         if payment.status == 'succeeded':
-#             print('ОПЛАТА ПРОШЛА УСПЕШНО')
-#             data = await state.get_data()
-#             artist_name = data.get('artist')
-#             totem_type = data.get('totem_type')
-#             artist_id = data.get('artist_id')
-#
-#             ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-#             await db.new_count_order()
-#             ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
-#             await db.skin(ord, message=message)
-#             if totem_type == '2D':
-#                 ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-#                                                 totem_type=totem_type, rand=ran, price=49)
-#                 await db.totem(ord_totem, message=message)
-#             if totem_type == '3D':
-#                 ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-#                                                 totem_type=totem_type, rand=ran, price=79)
-#                 await db.totem(ord_totem, message=message)
-#             await message.answer(
-#                 'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-#             await message.answer('Кстати, все наши скины умеют моргать. 👀')
-#             await message.answer(
-#                 'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-#             await state.finish()
-#             await cmd_start(message)
-#
-#     if message.text == "Назад":
-#         await final_order(message, state)
-#         await cls.OrderSkin.totem_photo.set()
 
 @dp.message_handler(state=cls.OrderSkin.cloak_description, content_types=['text'])
 async def order_skin(message: types.Message):
@@ -1009,6 +986,7 @@ async def totem(message: types.Message, state: FSMContext):
             await message.answer(
                 'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
             await message.answer('Кстати, все наши скины умеют моргать. 👀')
+            await bot.send_photo(message.from_user.id, open('picture/blink.png', 'rb'))
             await message.answer(
                 'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
             await state.finish()
