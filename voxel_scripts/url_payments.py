@@ -11,10 +11,10 @@ Configuration.account_id = id
 Configuration.secret_key = token
 
 
-async def get_url_payment():
+async def get_url_payment(amount, desc):
     payment = Payment.create({
         "amount": {
-            "value": "399.00",
+            "value": amount,
             "currency": "RUB"
         },
         "confirmation": {
@@ -22,7 +22,7 @@ async def get_url_payment():
             "return_url": "https://web.telegram.org/k/#@VoxelArt_bot"
         },
         "capture": True,
-        "description": "Заказ №1",
+        "description": desc,
     }, uuid.uuid4())
 
     return payment
