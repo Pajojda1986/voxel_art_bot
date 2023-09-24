@@ -16,12 +16,12 @@ class OrderSkin(StatesGroup):
     cloak_description2 = State()
     cloak_photo = State()
     payment_skin = State()
-    payment_skin_and_totem = State()
 
 class OrderSkin4D(StatesGroup):
     type_ord = 'skin4d'
     description = State()
     photo = State()
+    email = State()
     payment = State()
 
 class OrderCloak(StatesGroup):

@@ -2,6 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup
 from voxel_scripts import database as db
 import sqlite3 as sq
 
+
 async def new_order_chat(id, type=None):
     order_artist_panel = ReplyKeyboardMarkup(resize_keyboard=True)
     order = {}
@@ -11,7 +12,7 @@ async def new_order_chat(id, type=None):
     cur.execute('SELECT NAME FROM sqlite_master WHERE TYPE="table"')
     print()
     all_current_tables = cur.fetchall()[1:6]
-    i=0
+    i = 0
     for table in all_current_tables:
         result = cur.execute(f"SELECT * FROM {table[0]}")
         for row in result:
@@ -99,6 +100,9 @@ other_final_panel.add("Оплата").add("Назад", "Отмена заказ
 
 final_panel_skin = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 final_panel_skin.add("Хочу!", "Нет, спасибо!").add("Назад", "Отмена заказа")
+
+final_panel_skin2 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+final_panel_skin2.add("Хочу!", "Оплата").add("Назад", "Отмена заказа")
 
 agreement_panel = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 agreement_panel.add("Да", "Нет").add("Назад")

@@ -11,7 +11,7 @@ Configuration.account_id = id
 Configuration.secret_key = token
 
 
-async def get_url_payment(amount, desc):
+async def get_url_payment(amount, desc, email_):
     payment = Payment.create({
         "amount": {
             "value": amount,
@@ -23,6 +23,23 @@ async def get_url_payment(amount, desc):
         },
         "capture": True,
         "description": desc,
+        "receipt": {
+            "customer": {
+                "email": email_
+            },
+            "items": [
+                {
+                    "description": desc,
+                    "vat_code": 1,
+                    "quantity": "1",
+                    "amount": {
+                        "value": amount,
+                        "currency": "RUB"
+                    },
+                }
+            ]
+        }
     }, uuid.uuid4())
 
     return payment
+
