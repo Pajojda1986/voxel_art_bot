@@ -1,24 +1,27 @@
+import email_validate
 from aiogram import types
-from aiogram.types.message import ContentType
 from random import randint, choices
+from yookassa import Payment
 import string
+from voxel_scripts import url_payments as pt
 import sqlite3 as sq
 from voxel_scripts import database as db
 from aiogram.dispatcher import FSMContext
 from voxel_scripts import keyboards as kb
 from voxel_scripts import class_voxel as cls
-from voxel_scripts.payments import order, order_2, order_3
 
 from main import dp, bot
 
 all_photo = {}
 all_cloak = {}
+emails = {}
 all_totem = {}
 all_4d = {}
 all_3D_avatar = {}
+payment_orders = {}
+
 
 async def get_ord_skin(message, state, dictionary, rand=None, price=None):
-
     data = await state.get_data()
     hand_type = data.get('hand_type')
     artist_name = data.get('artist')
@@ -26,12 +29,14 @@ async def get_ord_skin(message, state, dictionary, rand=None, price=None):
 
     description = data.get('description')
 
-    ord = (message.from_user.id, artist_id, artist_name, hand_type, price, description, dictionary[message.from_user.id], rand)
+    ord = (
+    message.from_user.id, artist_id, artist_name, hand_type, price, description, dictionary[message.from_user.id], rand)
     print(ord)
     return ord
 
 
-async def get_ord_other(message, state, dictionary, type_ord, artist_id=None, artist_name=None, totem_type=None, rand=None, price=None):
+async def get_ord_other(message, state, dictionary, type_ord, artist_id=None, artist_name=None, totem_type=None,
+                        rand=None, price=None):
     data = await state.get_data()
 
     if artist_id is None and artist_name is None:
@@ -48,7 +53,9 @@ async def get_ord_other(message, state, dictionary, type_ord, artist_id=None, ar
 
     description = data.get(type_ord)
     if totem_type is not None:
-        ord = (message.from_user.id, artist_id, artist_name, totem_type, price, description, dictionary[message.from_user.id], rand)
+        ord = (
+        message.from_user.id, artist_id, artist_name, totem_type, price, description, dictionary[message.from_user.id],
+        rand)
         return ord
     else:
         ord = (message.from_user.id, artist_id, artist_name, price, description, dictionary[message.from_user.id], rand)
@@ -155,6 +162,7 @@ async def final_order(message, state, key=1):
                 except:
                     pass
 
+
 async def order_photo(message, dictionary):
     try:
         if message.document:
@@ -180,8 +188,10 @@ async def order_photo(message, dictionary):
 @dp.message_handler(text='Назад')
 async def cmd_start(message: types.Message):
     print(message.chat.id)
+
     await db.cmd_start_db(message.from_user.id)
-    if str(message.from_user.id) not in db.get_artists_info() and str(message.from_user.id) not in db.get_admins_info(all=1)['id']:
+    if str(message.from_user.id) not in db.get_artists_info() and str(message.from_user.id) not in \
+            db.get_admins_info(all=1)['id']:
         all_photo[message.from_user.id] = []
         all_totem[message.from_user.id] = []
         all_cloak[message.from_user.id] = []
@@ -190,7 +200,9 @@ async def cmd_start(message: types.Message):
                              f'который поможет Вам с заказом. Чтобы оформить заказ, '
                              f'напишите "Товары" или нажмите соответствующую кнопку. 👇', reply_markup=kb.main)
 
-    elif str(message.from_user.id) in db.get_artists_info() and str(message.from_user.id) in db.get_admins_info(all=1)['id']:
+
+    elif str(message.from_user.id) in db.get_artists_info() and str(message.from_user.id) in db.get_admins_info(all=1)[
+        'id']:
         await message.answer('Вы авторизовались как администратор и художник!', reply_markup=kb.main_multi)
 
     elif str(message.from_user.id) in db.get_admins_info(all=1)['id']:
@@ -199,14 +211,19 @@ async def cmd_start(message: types.Message):
     elif str(message.from_user.id) in db.get_artists_info():
         await message.answer(f'Вы авторизовались как художник', reply_markup=kb.artist_keyboard)
 
+    await bot.send_photo(chat_id=message.chat.id, photo=open('picture/menu.png', 'rb'))
+
 
 @dp.message_handler(text='Отзывы', state=None)
 async def cmd_text(message: types.Message):
-    await message.answer('Посмотреть отзывы Вы сможете в нашей группе VK https://vk.com/lootskinsstudio?w=app6326142_-222235507')
+    await message.answer(
+        'Посмотреть отзывы Вы сможете в нашей группе VK https://vk.com/lootskinsstudio?w=app6326142_-222235507')
+
 
 @dp.message_handler(text='Услуги', state=None)
 async def cmd_text(message: types.Message):
     await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
+
 
 @dp.message_handler(text='Спец-заказ', state=None)
 async def spez(message: types.Message):
@@ -214,12 +231,14 @@ async def spez(message: types.Message):
                          ' 3D арт или что то другое, напишите нам в сообщения сообщества ВК, для обсуждения условий. '
                          'Ссылка на группу: https://vk.com/lootskinsstudio')
 
+
 @dp.message_handler(text='Тотем (2D/3D)', state=None)
 async def totem(message: types.Message):
     all_totem[message.from_user.id] = []
     await message.answer('Какой предмет игрок чаще всего носит в руке? '
-                         'Конечно, тотем бессмертия! Из него можно сделать абсолютно всё - от забавной статуэтки с '
+                         'Конечно, тотем бессмертия! Из него можно сделать абсолютно всё - от забавной статуэтки с '    
                          'Вашим персонажем до магического кристалла.', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/totem.png', 'rb'))
     await message.answer('Сначала выберите, каким будет Ваш тотем - 2D или 3D', reply_markup=kb.type_totem_panel)
 
     await cls.OrderTotem.type.set()
@@ -272,20 +291,37 @@ async def totem(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=cls.OrderTotem.photo, content_types=['document', 'photo', 'text'])
-async def avatar(message: types.Message, state: FSMContext):
+async def totem(message: types.Message, state: FSMContext):
     await order_photo(message, all_totem)
     data = await state.get_data()
     type_totem = data.get('totem_type')
 
     if message.text == 'Продолжить':
         await final_other(message, state, 2, all_totem, 'Тотема', type=type_totem)
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
+
 
     elif message.text == "Оплата":
-        if type_totem == "2D":
-            await order(message, bot, ord='2D тотем', price_1=49)
+        try:
+            if emails[message.from_user.id]:
+                if type_totem == "2D":
+                    order = await pt.get_url_payment("49.00", "Уникальный 2D тотем на заказ!",  email_=emails[message.from_user.id])
+                    url = order.confirmation.confirmation_url
+                    await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                    payment_orders[message.from_user.id] = order
+                    await cls.OrderTotem.payment.set()
 
-        elif type_totem == "3D":
-            await order(message, bot, ord='3D тотем', price_1=79)
+                elif type_totem == "3D":
+                    order = await pt.get_url_payment("79.00", "Уникальный 3D тотем на заказ!",  email_=emails[message.from_user.id])
+                    url = order.confirmation.confirmation_url
+                    await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                    payment_orders[message.from_user.id] = order
+                    await cls.OrderTotem.payment.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
     elif message.text == 'Назад':
         await message.answer('Опишите, как должен выглядеть будущий Тотем, '
@@ -296,38 +332,69 @@ async def avatar(message: types.Message, state: FSMContext):
     elif message.text == 'Отмена заказа':
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
-
-
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderTotem.photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
-
-
-@dp.message_handler(state=cls.OrderTotem.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-
-    data = await state.get_data()
-    type_totem = data.get('totem_type')
-    if type_totem == "2D":
-        ord = await get_ord_other(message, state, all_totem, 'description', totem_type=type_totem, rand=ran, price=49)
     else:
-        ord = await get_ord_other(message, state, all_totem, 'description', totem_type=type_totem, rand=ran, price=79)
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
-    await db.new_count_order()
-    await db.totem(ord, message=message)
-    await message.answer('Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer('Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
 
+@dp.message_handler(state=cls.OrderTotem.payment, content_types=['text'])
+async def totem(message: types.Message, state: FSMContext):
+    async def succesed(key=None):
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            print('ОПЛАТА ПРОШЛА УСПЕШНО')
+
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+
+            data = await state.get_data()
+            type_totem = data.get('totem_type')
+            if type_totem == "2D":
+                ord = await get_ord_other(message, state, all_totem, 'description', totem_type=type_totem, rand=ran,
+                                          price=49)
+            else:
+                ord = await get_ord_other(message, state, all_totem, 'description', totem_type=type_totem, rand=ran,
+                                          price=79)
+
+            await db.new_count_order()
+            await db.totem(ord, message=message)
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: \nhttps://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            await state.finish()
+            await cmd_start(message)
+        else:
+            if key is None:
+                print(all_totem[message.from_user.id])
+                await message.answer("Вы ещё не оплатили заказ")
+            else:
+                data = await state.get_data()
+                type_totem = data.get('totem_type')
+                await final_other(message, state, 2, all_totem, 'Тотема', type=type_totem)
+                await cls.OrderTotem.previous()
+
+    if message.text == "Проверить оплату":
+        await succesed()
+
+    if message.text == "Назад":
+        await succesed(1)
 
 @dp.message_handler(text='3D аватар', state=None)
 async def avatar(message: types.Message):
     all_3D_avatar[message.from_user.id] = []
     await message.answer('👨 Уникальное фото профиля с Вашим персонажем!', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/avatar.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий аватар')
 
     await cls.Order3dAvatar.description.set()
@@ -344,8 +411,7 @@ async def avatar(message: types.Message, state: FSMContext):
             }
         )
 
-
-    if message.text != 'Назад' and "'" not in message.text and not'"' in message.text:
+    if message.text != 'Назад' and "'" not in message.text and not '"' in message.text:
         await message.answer("Теперь приложите до 3 фотографий-референсов в формате "
                              ".jpeg, а также обязательно развёртку вашего скина в формате .png без сжатия, "
                              "фотографии лучше присылать отдельными сообщениями!", reply_markup=kb.photo_panel)
@@ -365,9 +431,22 @@ async def avatar(message: types.Message, state: FSMContext):
 
     if message.text == 'Продолжить':
         await final_other(message, state, 3, all_3D_avatar, 'Аватара')
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
 
     elif message.text == "Оплата":
-        await order(message, bot, ord='Плащ', price_1=199)
+        try:
+            if emails[message.from_user.id]:
+                order = await pt.get_url_payment("79.00", "Уникальный аватар на заказ!", email_=emails[message.from_user.id])
+                url = order.confirmation.confirmation_url
+
+                await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                payment_orders[message.from_user.id] = order
+                await cls.Order3dAvatar.payment.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
     elif message.text == 'Назад':
         await message.answer('Опишите, как должен выглядеть будущий 3D Аватар', reply_markup=kb.cancel_panel)
@@ -377,24 +456,49 @@ async def avatar(message: types.Message, state: FSMContext):
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
 
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.Order3dAvatar.photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
 
+@dp.message_handler(state=cls.Order3dAvatar.payment, content_types=['text'])
+async def avatar(message: types.Message, state: FSMContext):
+    async def succesed(key=None):
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            print('ОПЛАТА ПРОШЛА УСПЕШНО')
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+            ord = await get_ord_other(message, state, all_3D_avatar, 'description', rand=ran, price=199)
+            await db.new_count_order()
+            await db.avatar(ord, message=message)
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: \nhttps://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            await state.finish()
+            await cmd_start(message)
+        else:
+            if key is None:
+                await message.answer("Вы ещё не оплатили заказ")
+            else:
+                await final_other(message, state, 3, all_3D_avatar, 'Аватара')
+                await cls.Order3dAvatar.previous()
 
-@dp.message_handler(state=cls.Order3dAvatar.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    ord = await get_ord_other(message, state, all_3D_avatar, 'description', rand=ran, price=199)
-    await db.new_count_order()
-    await db.avatar(ord, message=message)
-    await message.answer('Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
+    if message.text == "Проверить оплату":
+        await succesed()
+    if message.text == "Назад":
+        await succesed(1)
 
 
 @dp.message_handler(text='Плащ', state=None)
@@ -404,6 +508,7 @@ async def cloak(message: types.Message):
                          'да и получить их не так просто, но с помощью мода Advanced Capes Mod можно '
                          'установить плащ с совершенно любым рисунком! '
                          'Мы сделаем его по Вашему описанию!', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/cloak.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий плащ')
 
     await cls.OrderCloak.description.set()
@@ -439,9 +544,21 @@ async def cloak(message: types.Message, state: FSMContext):
 
     if message.text == 'Продолжить':
         await final_other(message, state, 4, all_cloak, 'Плаща')
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
 
     elif message.text == 'Оплата':
-        await order(message, bot, ord='Плащ', price_1=79)
+        try:
+            if emails[message.from_user.id]:
+                order = await pt.get_url_payment("79.00", "Уникальный плащ на заказ!", email_=emails[message.from_user.id])
+                url = order.confirmation.confirmation_url
+                await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                payment_orders[message.from_user.id] = order
+                await cls.OrderCloak.payment.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
     elif message.text == 'Назад':
         await message.answer('Опишите, как должен выглядеть будущий Плащ', reply_markup=kb.cancel_panel)
@@ -450,27 +567,50 @@ async def cloak(message: types.Message, state: FSMContext):
     elif message.text == 'Отмена заказа':
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderCloak.photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+@dp.message_handler(state=cls.OrderCloak.payment, content_types=['text'])
+async def cloak(message: types.Message, state: FSMContext):
+    async def succesed(key=None):
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            print('ОПЛАТА ПРОШЛА УСПЕШНО')
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+            ord = await get_ord_other(message, state, all_cloak, 'description', rand=ran, price=79)
+            await db.new_count_order()
+            await db.cloak(ord, message=message)
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: \nhttps://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            await state.finish()
+            await cmd_start(message)
+        else:
+            if key is None:
+                await message.answer("Вы ещё не оплатили заказ")
+            else:
+                await final_other(message, state, 4, all_cloak, 'Плаща')
+                await cls.OrderCloak.previous()
 
+    if message.text == "Проверить оплату":
+        await succesed()
 
-@dp.message_handler(state=cls.OrderCloak.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    ord = await get_ord_other(message, state, all_cloak, 'description', rand=ran, price=79)
-    await db.new_count_order()
-    await db.cloak(ord, message=message)
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
-
+    if message.text == "Назад":
+        await succesed(1)
 
 @dp.message_handler(text='4D скин (Java)', state=None)
 async def skin4D(message: types.Message):
@@ -479,6 +619,7 @@ async def skin4D(message: types.Message):
                          'Для того, чтобы использовать 4D скин, необходим мод Figura: '
                          'https://modrinth.com/mod/figura подробнее о том, как установить такой скин: '
                          'ссылка на статью', reply_markup=kb.cancel_panel)
+    await bot.send_photo(message.from_user.id, open('picture/4d_skin.png', 'rb'))
     await message.answer('Опишите, как должен выглядеть будущий 4D скин.')
 
     await cls.OrderSkin4D.description.set()
@@ -515,38 +656,75 @@ async def skin4D(message: types.Message, state: FSMContext):
 
     if message.text == 'Продолжить':
         await final_other(message, state, 5, all_4d, '4D скина')
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
 
     elif message.text == 'Назад':
         await message.answer('Опишите, как должен выглядеть будущий 4D скин.', reply_markup=kb.cancel_panel)
         await cls.OrderSkin4D.description.set()
 
-    elif message.text == 'Оплата':
-        await order(message, bot, ord='4D Скин', price_1=399)
-
     elif message.text == 'Отмена заказа':
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
         await state.finish()
 
+    elif message.text == 'Оплата':
+        try:
+            if emails[message.from_user.id]:
+                order = await pt.get_url_payment("399.00", "Уникальный 4D скин на заказ!", email_=emails[message.from_user.id])
+                url = order.confirmation.confirmation_url
+                await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                payment_orders[message.from_user.id] = order
+                await cls.OrderSkin4D.payment.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin4D.photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
+@dp.message_handler(state=cls.OrderSkin4D.payment, content_types=['text'])
+async def skin4D(message: types.Message, state: FSMContext):
+    async def succesed(key=None):
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+            ord = await get_ord_other(message, state, all_4d, 'description', rand=ran, price=399)
+            await db.new_count_order()
+            await db.skin_4d(ord, message=message)
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: \nhttps://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            print(payment_orders)
+            del payment_orders[message.from_user.id]
+            print(payment_orders)
+            await state.finish()
+            await cmd_start(message)
+        else:
+            if key is None:
+                await message.answer("Вы ещё не оплатили заказ")
+            else:
+                await final_other(message, state, 5, all_4d, '4D скина')
+                await cls.OrderSkin4D.previous()
 
-@dp.message_handler(state=cls.OrderSkin4D.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    ord = await get_ord_other(message, state, all_4d, 'description', rand=ran, price=399)
-    await db.new_count_order()
-    await db.skin_4d(ord, message=message)
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
+    if message.text == "Проверить оплату":
+        await succesed()
 
+    if message.text == "Назад":
+        await succesed(1)
 
 @dp.message_handler(text='Скин', state=None)
 async def order_skin(message: types.Message):
@@ -555,6 +733,7 @@ async def order_skin(message: types.Message):
     all_cloak[message.from_user.id] = []
     await message.answer('Давайте выберем, какие руки будут у Вашего скина - '
                          'стандартные, как у Стива, или тонкие, как у Алекс?', reply_markup=kb.hands_panel)
+    await bot.send_photo(message.from_user.id, open('picture/hands.png', 'rb'))
 
     await cls.OrderSkin.hand_type.set()
 
@@ -572,6 +751,9 @@ async def order_skin(message: types.Message, state: FSMContext):
                              "у каждого из которых свой неповторимый стиль! Вы можете выбрать того, "
                              "кто будет выполнять Ваш заказ или отдать его "
                              "случайному художнику 🎲", reply_markup=kb.artist_panel())
+        await bot.send_photo(message.from_user.id, open('picture/wioaru.png', 'rb'))
+        await bot.send_photo(message.from_user.id, open('picture/dialm.png', 'rb'))
+        await bot.send_photo(message.from_user.id, open('picture/dezfoar.png', 'rb'))
         await cls.OrderSkin.next()
 
     elif message.text == 'Назад' or message.text == 'Отмена':
@@ -634,7 +816,7 @@ async def order_skin(message: types.Message, state: FSMContext):
 
     else:
         await message.answer('Выберете художника! Если вы хотите отменить '
-                             'составление заказа впишите "Отмена"', reply_markup = kb.artist_panel())
+                             'составление заказа впишите "Отмена"', reply_markup=kb.artist_panel())
 
 
 @dp.message_handler(state=cls.OrderSkin.description)
@@ -660,7 +842,10 @@ async def order_skin(message: types.Message, state: FSMContext):
         await cls.OrderSkin.previous()
         await message.answer("👨‍🎨 У нас работает несколько талантливых художников, "
                              "у каждого из которых свой неповторимый стиль! Вы можете выбрать того, кто будет "
-                             "выполнять Ваш заказ или отдать его случайному художнику 🎲", reply_markup = kb.artist_panel())
+                             "выполнять Ваш заказ или отдать его случайному художнику 🎲",
+                             reply_markup=kb.artist_panel())
+        await bot.send_photo(message.from_user.id, open('picture/wioaru.png', 'rb'))
+        await bot.send_photo(message.from_user.id, open('picture/dialm.png', 'rb'))
 
 
 @dp.message_handler(state=cls.OrderSkin.photo, content_types=['document', 'photo', 'text'])
@@ -672,12 +857,22 @@ async def order_skin(message: types.Message, state: FSMContext):
         await final_order(message, state, key=2)
         await message.answer('Хотите добавить что-нибудь ещё к Вашему заказу, например, тотем или плащ? 😁')
 
+
     elif message.text == 'Хочу!':
         await message.answer('Хотите ли вы добавить к заказу тотем?', reply_markup=kb.agreement_panel)
         await cls.OrderSkin.additional_goods.set()
 
-    elif message.text == "Нет, спасибо!":
-        await order(message, bot, ord='Скин', price_1=249)
+    elif message.text == "Нет, спасибо!" or message.text == "Оплата":
+        try:
+            if emails[message.from_user.id]:
+                order = await pt.get_url_payment("249.00", "Уникальный Скин на заказ!", email_=emails[message.from_user.id])
+                url = order.confirmation.confirmation_url
+                await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                payment_orders[message.from_user.id] = order
+                await cls.OrderSkin.payment_skin.set()
+        except KeyError:
+            await message.answer("Введите свой email, на который придёт чек об оплате, после чего повторно нажмите на кнопку.", reply_markup=kb.final_panel_skin2)
+
 
     elif message.text == "Отмена заказа":
         await message.answer('Выберите услугу ✏️', reply_markup=kb.goods)
@@ -688,27 +883,20 @@ async def order_skin(message: types.Message, state: FSMContext):
                              "Чтобы оставить описание прежним введите 'Продолжить'", reply_markup=kb.cancel_panel)
         await cls.OrderSkin.previous()
 
-
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin.photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
-
-
-@dp.message_handler(state=cls.OrderSkin.photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
-    await db.new_count_order()
-    await db.skin(ord, message=message)
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы".')
-    await message.answer('Кстати, все наши скины умеют моргать. 👀')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
-
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
 @dp.message_handler(state=cls.OrderSkin.additional_goods, content_types=['text'])
 async def order_skin(message: types.Message):
@@ -716,6 +904,7 @@ async def order_skin(message: types.Message):
         await message.answer("Какой предмет игрок чаще всего носит в руке? Конечно, "
                              "тотем бессмертия! Из него можно сделать абсолютно всё - от забавной статуэтки с "
                              "Вашим персонажем до магического кристалла")
+        await bot.send_photo(message.from_user.id, open('picture/totem.png', 'rb'))
         await message.answer("Сначала выберите, каким будет Ваш тотем - 2D или 3D", reply_markup=kb.type_totem_panel)
         await cls.OrderSkin.next()
 
@@ -781,89 +970,68 @@ async def order_skin(message: types.Message, state: FSMContext):
     await order_photo(message, all_totem)
 
     if message.text == 'Продолжить':
-        data = await state.get_data()
-        description = data.get('totem_description')
-        totem_type = data.get('totem_type')
-
-        await message.answer(f"Описание тотема: {description},"
-                             f"\nТип тотема: {totem_type}", reply_markup=kb.cancel_panel)
-
-        if len(all_totem[message.from_user.id]) == 0:
-            await message.answer("Вы не приложили файлы или фотографии")
-
-        else:
-            if len(all_totem[message.from_user.id]) > 3:
-                await message.answer("Все фотографии или файлы больше двух были удалены!")
-                del all_totem[message.from_user.id][2:]
-            for i in all_totem[message.from_user.id]:
-                try:
-                    await bot.send_photo(message.chat.id, str(i))
-                except:
-                    pass
-                try:
-                    await bot.send_document(message.chat.id, str(i))
-                except:
-                    pass
+        await final_order(message, state)
 
         await message.answer('Хотите ли добавить плащ к вашему заказу?', reply_markup=kb.agreement_panel)
 
     elif message.text == 'Назад':
-        await message.answer('Напишите, что Вы хотите видеть в качестве тотема. Если вы хотите оставить описание прежним введите "Продолжить"', reply_markup=kb.cancel_panel)
+        await message.answer(
+            'Напишите, что Вы хотите видеть в качестве тотема. Если вы хотите оставить описание прежним введите "Продолжить"',
+            reply_markup=kb.cancel_panel)
         await cls.OrderSkin.previous()
 
     elif message.text == 'Да':
         await message.answer("Майнкрафт предлагает ограниченное количество плащей, "
                              "да и получить их не так просто, но с помощью мода Advanced Capes Mod можно установить "
                              "плащ с совершенно любым рисунком! Мы сделаем его по Вашему описанию!")
+        await bot.send_photo(message.from_user.id, open('picture/cloak.png', 'rb'))
         await message.answer("Опишите, как Вы представляете Ваш будущий плащ.", reply_markup=kb.cancel_panel)
         await cls.OrderSkin.cloak_description2.set()
 
     elif message.text == "Нет":
         await final_order(message, state)
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
+
 
     elif message.text == "Оплата":
-        data = await state.get_data()
-        totem_type = data.get('totem_type')
+        try:
+            if emails[message.from_user.id]:
+                data = await state.get_data()
+                totem_type = data.get('totem_type')
 
-        if totem_type == '2D':
-            await order_2(message, bot, 'скин', '2D тотем', 249, 49)
-        elif totem_type == '3D':
-            await order_2(message, bot, 'скин', '3D тотем', 249, 79)
+                if totem_type == '2D':
+                    order = await pt.get_url_payment("299.00", "Уникальный 2D тотем и скин на заказ!", email_=emails[message.from_user.id])
+                    url = order.confirmation.confirmation_url
+                    await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                    payment_orders[message.from_user.id] = order
+                    await cls.OrderSkin.payment_skin.set()
+                elif totem_type == '3D':
+                    order = await pt.get_url_payment("329.00", "Уникальный 3D тотем и скин на заказ!", email_=emails[message.from_user.id])
+                    url = order.confirmation.confirmation_url
+                    await message.answer(f'Мы использовали {emails[message.from_user.id]}\nСсылка на оплату: {url}', reply_markup=kb.payment_ok)
+                    payment_orders[message.from_user.id] = order
+                    await cls.OrderSkin.payment_skin.set()
 
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin.totem_photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
-
-
-@dp.message_handler(state=cls.OrderSkin.totem_photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    data = await state.get_data()
-    artist_name = data.get('artist')
-    totem_type = data.get('totem_type')
-    artist_id = data.get('artist_id')
-
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    await db.new_count_order()
-    ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
-    await db.skin(ord, message=message)
-    if totem_type == '2D':
-        ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-                                      totem_type=totem_type, rand=ran, price=49)
-        await db.totem(ord_totem, message=message)
-    if totem_type == '3D':
-        ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-                                        totem_type=totem_type, rand=ran, price=79)
-        await db.totem(ord_totem, message=message)
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer('Кстати, все наши скины умеют моргать. 👀')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
-
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
 @dp.message_handler(state=cls.OrderSkin.cloak_description, content_types=['text'])
 async def order_skin(message: types.Message):
@@ -878,30 +1046,34 @@ async def order_skin(message: types.Message):
         await cls.OrderSkin.additional_goods.set()
 
     elif message.text == 'Нет':
-        await message.answer('Вы не выбрали дополнительные услуги, поэтому перейдём к оплате!')
-        await order(message, bot, ord='Скин', price_1=249)
+        try:
+            if emails[message.from_user.id]:
+                await message.answer('Вы не выбрали дополнительные услуги, поэтому перейдём к оплате!')
+                order = await pt.get_url_payment("249.00", "Уникальный Скин на заказ!", email_=emails[message.from_user.id])
+                url = order.confirmation.confirmation_url
+                await message.answer(f'Ссылка на оплату: {url}', reply_markup=kb.payment_ok)
+                payment_orders[message.from_user.id] = order
+                await cls.OrderSkin.payment_skin.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
+            await message.answer("Введите свой email на который придёт чек об оплате!")
 
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin.cloak_description)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
 
-
-@dp.message_handler(state=cls.OrderSkin.cloak_description, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
-    await db.new_count_order()
-    await db.skin(ord, message=message)
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer('Кстати, все наши скины умеют моргать. 👀')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
-
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
 
 @dp.message_handler(state=cls.OrderSkin.cloak_description2, content_types=['text'])
 async def order_skin(message: types.Message, state: FSMContext):
@@ -935,66 +1107,143 @@ async def order_skin(message: types.Message, state: FSMContext):
 
     if message.text == 'Продолжить':
         await final_order(message, state)
+        try:
+            emails[message.from_user.id]
+        except KeyError:
+            await message.answer("Теперь введите свой email, на который придёт чек об оплате")
+
 
     elif message.text == 'Назад':
         await message.answer("Напишите, что Вы хотите видеть в качестве плаща.", reply_markup=kb.cancel_panel)
         await cls.OrderSkin.previous()
 
     elif message.text == "Оплата":
-        data = await state.get_data()
-        description_totem = data.get('totem_description')
-        description_cloak = data.get('cloak_description')
-        if not description_totem:
-            await order_2(message, bot, 'скин', 'плащ', 249, 79)
-        elif description_cloak and description_totem:
-            data = await state.get_data()
-            totem_type = data.get('totem_type')
-            if totem_type == '2D':
-                await order_3(message, bot, 'скин', '2D тотем', 'плащ', 249, 49, 79)
-            elif totem_type == '3D':
-                await order_3(message, bot, 'скин', '3D тотем', 'плащ', 249, 79, 79)
+        try:
+            if emails[message.from_user.id]:
+                data = await state.get_data()
+                description_totem = data.get('totem_description')
+                description_cloak = data.get('cloak_description')
+                if not description_totem:
+                    order = await pt.get_url_payment("325.99", "Уникальный Скин и плащ на заказ!", email_=emails[message.from_user.id])
+                    url = order.confirmation.confirmation_url
+                    await message.answer(f'Ссылка на оплату: {url}', reply_markup=kb.payment_ok)
+                    payment_orders[message.from_user.id] = order
+                    await cls.OrderSkin.payment_skin.set()
 
+                elif description_cloak and description_totem:
+                    data = await state.get_data()
+                    totem_type = data.get('totem_type')
 
-@dp.pre_checkout_query_handler(lambda query: True, state=cls.OrderSkin.cloak_photo)
-async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+                    if totem_type == '2D':
+                        order = await pt.get_url_payment("374.99", "Уникальный Скин, 2D тотем и плащ на заказ!", email_=emails[message.from_user.id])
+                        url = order.confirmation.confirmation_url
+                        await message.answer(f'Ссылка на оплату: {url}', reply_markup=kb.payment_ok)
+                        payment_orders[message.from_user.id] = order
+                        await cls.OrderSkin.payment_skin.set()
 
+                    elif totem_type == '3D':
+                        order = await pt.get_url_payment("405.99", "Уникальный Скин, 3D тотем и плащ на заказ!", email_=emails[message.from_user.id])
+                        url = order.confirmation.confirmation_url
+                        await message.answer(f'Ссылка на оплату: {url}', reply_markup=kb.payment_ok)
+                        payment_orders[message.from_user.id] = order
+                        await cls.OrderSkin.payment_skin.set()
+        except KeyError:
+            await message.answer("Вы ещё не ввели свой email!")
 
-@dp.message_handler(state=cls.OrderSkin.cloak_photo, content_types=ContentType.SUCCESSFUL_PAYMENT)
-async def succsessful_payment(message: types.Message, state: FSMContext):
-    print('ОПЛАТА ПРОШЛА УСПЕШНО')
+    else:
+        email_true = email_validate.validate(
+            email_address=message.text,
+            check_format=True,
+            check_blacklist=False,
+            check_dns=True,
+            dns_timeout=10,
+            check_smtp=True,
+            smtp_debug=False)
+        if email_true is True:
+            await message.answer("Мы приняли вашу почту!")
+            emails[message.from_user.id] = message.text
+        else:
+            await message.answer("Вы ввели некорректную почту, попробуйте ещё раз!")
+
+@dp.message_handler(state=cls.OrderSkin.payment_skin, content_types=['text'])
+async def totem(message: types.Message, state: FSMContext):
     data = await state.get_data()
     description_totem = data.get('totem_description')
+    description_cloak = data.get('cloak_description')
     totem_type = data.get('totem_type')
     artist_name = data.get('artist')
     artist_id = data.get('artist_id')
 
-    ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
-    await db.new_count_order()
+    async def succesed(key=None):
+        payment = Payment.find_one(payment_orders[message.from_user.id].id)
+        if payment.status == 'succeeded':
+            print('ОПЛАТА ПРОШЛА УСПЕШНО')
 
-    ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
-    ord_cloak = await get_ord_other(message, state, all_cloak, 'cloak_description', artist_id, artist_name, rand=ran, price=79)
+            ran = ''.join(choices(string.ascii_uppercase + string.digits, k=10))
+            await db.new_count_order()
 
-    await db.skin(ord, message=message)
-    await db.cloak(ord_cloak, message=message)
-    if description_totem:
+            ord = await get_ord_skin(message, state, all_photo, rand=ran, price=249)
 
-        if totem_type == '2D':
-            ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-                                           totem_type=totem_type, rand=ran, price=49)
-            await db.totem(ord_totem, message=message)
-        elif totem_type == '3D':
-            ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id, artist_name,
-                                            totem_type=totem_type, rand=ran, price=79)
-            await db.totem(ord_totem, message=message)
+            await db.skin(ord, message=message)
+            if description_cloak:
+                ord_cloak = await get_ord_other(message, state, all_cloak, 'cloak_description', artist_id, artist_name,
+                                                rand=ran, price=79)
+                await db.cloak(ord_cloak, message=message)
+            if description_totem:
 
-    await message.answer(
-        'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
-    await message.answer('Кстати, все наши скины умеют моргать. 👀')
-    await message.answer(
-        'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды: https://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
-    await state.finish()
-    await cmd_start(message)
+                if totem_type == '2D':
+                    ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id,
+                                                    artist_name,
+                                                    totem_type=totem_type, rand=ran, price=49)
+                    await db.totem(ord_totem, message=message)
+                elif totem_type == '3D':
+                    ord_totem = await get_ord_other(message, state, all_totem, 'totem_description', artist_id,
+                                                    artist_name,
+                                                    totem_type=totem_type, rand=ran, price=79)
+                    await db.totem(ord_totem, message=message)
+
+            await message.answer(
+                'Оплата прошла успешно, художник вскоре начнёт работу! Посмотреть Ваши заказы можно в главном меню, раздел "Мои заказы"')
+            await message.answer('Кстати, все скины, нарисованные в нашей студии, умеют моргать 👀\nЧтобы увидеть это, Вам необходим ресурс-пак AnimatedSkin: https://www.planetminecraft.com/texture-pack/animatedskin/')
+            await bot.send_photo(message.from_user.id, open('picture/blink.png', 'rb'))
+            await message.answer(
+                'Пока художник занимается Вашим заказом, можете посмотреть сериал, в котором используются скины и модели от нашей команды \nhttps://www.youtube.com/playlist?list=PLVe49ImhHc6k2VwaXj-Hz6GRUU_nFyl16')
+            await state.finish()
+            await cmd_start(message)
+
+        else:
+
+            if key is None:
+                await message.answer("Вы ещё не оплатили заказ")
+            else:
+                if description_totem and not description_cloak:
+                    await final_order(message, state)
+                    if not emails[message.from_user.id]:
+                        await message.answer("Теперь введите свой email на который придёт чек об оплате!")
+                    await cls.OrderSkin.totem_photo.set()
+                elif description_cloak and not description_totem:
+                    await final_order(message, state)
+                    if not emails[message.from_user.id]:
+                        await message.answer("Теперь введите свой email на который придёт чек об оплате!")
+                    await cls.OrderSkin.cloak_photo.set()
+                elif description_cloak and description_totem:
+                    await final_order(message, state)
+                    if not emails[message.from_user.id]:
+                        await message.answer("Теперь введите свой email на который придёт чек об оплате!")
+                    await cls.OrderSkin.totem_photo.set()
+                else:
+                    await final_order(message, state)
+                    if not emails[message.from_user.id]:
+                        await message.answer("Теперь введите свой email на который придёт чек об оплате!")
+                    await message.answer("Хотите ли вы добавить что-нибудь ещё?")
+                    await cls.OrderSkin.photo.set()
+
+    if message.text == "Проверить оплату":
+       await succesed()
+
+    elif message.text == "Назад":
+        await succesed(1)
+
 
 @dp.message_handler(text='Мои заказы')
 async def my_order(message: types.Message):
@@ -1003,10 +1252,13 @@ async def my_order(message: types.Message):
     await message.answer(f'Кол-во ваших заказов {keyboard[0]}', reply_markup=keyboard[1])
     await cls.OrderChat.search.set()
 
+
 num_cust = {}
 id_art = {}
 all_row = {}
 id_cust = {}
+
+
 @dp.message_handler(state=cls.OrderChat.search, content_types=['document', 'photo', 'text'])
 async def cmd_text_order(message: types.Message, state: FSMContext):
     db = sq.connect('voxel.db')
@@ -1017,7 +1269,8 @@ async def cmd_text_order(message: types.Message, state: FSMContext):
 
         request = message.text.split()
         all_row[message.from_user.id] = []
-        if request[0][1:] in [str(i) for i in range(0, 10000)] and request[0][0] == '№' and not message.text.isdigit(): #если вдруг у нас будет 10000 заказ, знай, в range лимит!!!
+        if request[0][1:] in [str(i) for i in range(0, 10000)] and request[0][
+            0] == '№' and not message.text.isdigit():  # если вдруг у нас будет 10000 заказ, знай, в range лимит!!!
 
             num_cust[message.chat.id] = request[0][1:]
             for i in request[1:]:
@@ -1053,10 +1306,11 @@ async def cmd_text_order(message: types.Message, state: FSMContext):
 async def cmd_text_order(message: types.Message):
     keyboard = await kb.new_order_chat(message.from_user.id, 3)
     if message.text == 'Да':
-        await message.answer(f'Открыт чат с художником номер {num_cust[message.from_user.id]}\nЧтобы выйти из чата впишите "Выйти",'
-                             f' либо нажмиите соответствующую кнопку. Пока вы находитесь в чате,'
-                             f' все ваши сообщение отправляются заказчику, будьте внимательны!',
-                             reply_markup=kb.exit_ord_panel)
+        await message.answer(
+            f'Открыт чат с художником номер {num_cust[message.from_user.id]}\nЧтобы выйти из чата впишите "Выйти",'
+            f' либо нажмиите соответствующую кнопку. Пока вы находитесь в чате,'
+            f' все ваши сообщение отправляются заказчику, будьте внимательны!',
+            reply_markup=kb.exit_ord_panel)
         print(all_row[message.from_user.id])
         await cls.OrderChat.chat.set()
 
@@ -1077,7 +1331,8 @@ async def cmd_text_order(message: types.Message):
         await cls.OrderChat.search.set()
 
     elif message.text == "Завершить заказ":
-        await message.answer('Вы уверены? Чтобы завершить заказ напишите: `ЗАВЕРШИТЬ ЗАКАЗ`', parse_mode="MARKDOWN", reply_markup=kb.cancel_panel)
+        await message.answer('Вы уверены? Чтобы завершить заказ напишите: `ЗАВЕРШИТЬ ЗАКАЗ`', parse_mode="MARKDOWN",
+                             reply_markup=kb.cancel_panel)
         await cls.OrderChat.final_chat.set()
 
     elif message.photo:
@@ -1087,17 +1342,26 @@ async def cmd_text_order(message: types.Message):
         except IndexError:
             documents_id = message.photo[0].file_id
 
-        await message.bot.send_photo(id_art[message.from_user.id], documents_id, caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
+        await message.bot.send_photo(id_art[message.from_user.id], documents_id,
+                                     caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
+        await message.bot.send_photo(-4020550324, documents_id,
+                                     caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
         await message.answer('Ваше сообщение было отправлено! ✉️')
 
     elif message.text:
-        await message.bot.send_message(id_art[message.from_user.id], f'Сообщение заказчика №{num_cust[message.from_user.id]}:\n{message.text}')
+        await message.bot.send_message(id_art[message.from_user.id],
+                                       f'Сообщение заказчика №{num_cust[message.from_user.id]}:\n{message.text}')
+        await message.bot.send_message(-4020550324,
+                                       f'Сообщение заказчика №{num_cust[message.from_user.id]}:\n{message.text}')
         await message.answer('Ваше сообщение было отправлено! ✉️')
 
     elif message.document:
         try:
             documents_id = message.document.file_id
-            await message.bot.send_document(id_art[message.from_user.id], documents_id, caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
+            await message.bot.send_document(id_art[message.from_user.id], documents_id,
+                                            caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
+            await message.bot.send_document(-4020550324, documents_id,
+                                            caption=f'Сообщение заказчика №{num_cust[message.from_user.id]}: {message.caption}')
             await message.answer('Ваше сообщение было отправлено! ✉️')
         except:
             await message.answer('Сообщение не было отправлено, возникла ошибка!')
@@ -1130,6 +1394,7 @@ async def cmd_text_order(message: types.Message, state: FSMContext):
         await bot.send_message(ord[4], f'Покупатель №{ord[1]} завершил заказ!')
         await message.answer('Заказ завершён!', reply_markup=kb.menu)
         await state.finish()
+
 
 @dp.message_handler(text="Заказы")
 async def cmd_text_artist(message: types.Message):
@@ -1184,10 +1449,11 @@ async def cmd_text_artist(message: types.Message, state: FSMContext):
 async def cmd_text_artist(message: types.Message):
     keyboard = await kb.new_order_chat(message.from_user.id, 4)
     if message.text == 'Да':
-        await message.answer(f'Открыт чат с заказчиком номер {num_cust[message.from_user.id]}\nЧтобы выйти из чата впишите "Выйти",'
-                             f' либо нажмиите соответствующую кнопку, пока вы находитесь в чате,'
-                             f' все ваши сообщение отправляются заказчику, будьте внимательны!',
-                             reply_markup=kb.exit_panel)
+        await message.answer(
+            f'Открыт чат с заказчиком номер {num_cust[message.from_user.id]}\nЧтобы выйти из чата впишите "Выйти",'
+            f' либо нажмиите соответствующую кнопку, пока вы находитесь в чате,'
+            f' все ваши сообщение отправляются заказчику, будьте внимательны!',
+            reply_markup=kb.exit_panel)
         await cls.ArtistPanel.chat.set()
 
     elif message.text == "Назад":
@@ -1212,17 +1478,26 @@ async def cmd_text_artist(message: types.Message):
         except IndexError:
             documents_id = message.photo[0].file_id
 
-        await message.bot.send_photo(id_cust[message.from_user.id], documents_id, caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
+        await message.bot.send_photo(id_cust[message.from_user.id], documents_id,
+                                     caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
+        await message.bot.send_photo(-4020550324, documents_id,
+                                     caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
         await message.answer('Ваше сообщение было отправлено! ✉️')
 
     elif message.text:
-        await message.bot.send_message(id_cust[message.from_user.id], f'Сообщение от художника заказа №{num_cust[message.from_user.id]}:\n{message.text}')
+        await message.bot.send_message(id_cust[message.from_user.id],
+                                       f'Сообщение от художника заказа №{num_cust[message.from_user.id]}:\n{message.text}')
+        await message.bot.send_message(-4020550324,
+                                       f'Сообщение от художника заказа №{num_cust[message.from_user.id]}:\n{message.text}')
         await message.answer('Ваше сообщение было отправлено! ✉️')
 
     elif message.document:
         try:
             documents_id = message.document.file_id
-            await message.bot.send_document(id_cust[message.from_user.id], documents_id, caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
+            await message.bot.send_document(id_cust[message.from_user.id], documents_id,
+                                            caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
+            await message.bot.send_document(-4020550324, documents_id,
+                                            caption=f'Сообщение от художника заказа №{num_cust[message.from_user.id]}')
             await message.answer('Ваше сообщение было отправлено! ✉️')
         except:
             await message.answer('Сообщение не было отправлено, возникла ошибка!')
@@ -1269,7 +1544,8 @@ async def cmd_text_artist(message: types.Message):
 async def cmd_text_artist(message: types.Message):
     if str(message.from_user.id) in db.get_artists_info():
         money = await db.get_money(message.from_user.id)
-        await message.answer(f'Ваш баланс: {money} рублей! Мы выплачиваем деньги сотрудникам первого числа каждого месяца')
+        await message.answer(
+            f'Ваш баланс: {money} рублей! Мы выплачиваем деньги сотрудникам первого числа каждого месяца')
     else:
         await message.reply("Извините, я вас не понимаю. 😔")
 

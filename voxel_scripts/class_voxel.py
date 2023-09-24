@@ -15,20 +15,21 @@ class OrderSkin(StatesGroup):
     cloak_description = State()
     cloak_description2 = State()
     cloak_photo = State()
-
+    payment_skin = State()
 
 class OrderSkin4D(StatesGroup):
-
     type_ord = 'skin4d'
     description = State()
     photo = State()
-
+    email = State()
+    payment = State()
 
 class OrderCloak(StatesGroup):
 
     type_ord = 'cloak'
     description = State()
     photo = State()
+    payment = State()
 
 
 class Order3dAvatar(StatesGroup):
@@ -36,7 +37,7 @@ class Order3dAvatar(StatesGroup):
     type_ord = 'avatar'
     description = State()
     photo = State()
-
+    payment = State()
 
 class OrderTotem(StatesGroup):
 
@@ -44,7 +45,7 @@ class OrderTotem(StatesGroup):
     type = State()
     description = State()
     photo = State()
-
+    payment = State()
 
 class OrderChat(StatesGroup):
     search = State()
