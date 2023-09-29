@@ -753,7 +753,6 @@ async def order_skin(message: types.Message, state: FSMContext):
                              "случайному художнику 🎲", reply_markup=kb.artist_panel())
         await bot.send_photo(message.from_user.id, open('picture/wioaru.png', 'rb'))
         await bot.send_photo(message.from_user.id, open('picture/dialm.png', 'rb'))
-        await bot.send_photo(message.from_user.id, open('picture/dezfoar.png', 'rb'))
         await cls.OrderSkin.next()
 
     elif message.text == 'Назад' or message.text == 'Отмена':
