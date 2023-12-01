@@ -1,3 +1,2 @@
 # voxel_art_bot
-first version 
-ЕСЛИ МЕНЯ УБЬЮТ ЭТО БУДЕТ ДОКОЗАТЕЛЬСТВОМ МОЕЙ СМЕРТИ...
+first version
